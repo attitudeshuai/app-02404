@@ -216,15 +216,18 @@ public class RegistrationService {
         if (oldStatus == newStatus) {
             return;
         }
+        if (oldStatus == 1) {
+            throw new BusinessException("已完成的挂号记录不允许修改");
+        }
 
         Connection conn = null;
         try {
             conn = DBUtil.getConnection();
             conn.setAutoCommit(false);
 
-            // 改为已取消：若原为待就诊或已完成，释放号源
+            // 改为已取消：若原为待就诊，释放号源
             if (newStatus == 2) {
-                if (oldStatus == 0 || oldStatus == 1) {
+                if (oldStatus == 0) {
                     scheduleDAO.decrementCount(conn, reg.getScheduleId());
                 }
                 int u = registrationDAO.updateStatus(conn, regId, 2);
@@ -239,7 +242,7 @@ public class RegistrationService {
                 int u = registrationDAO.updateStatus(conn, regId, newStatus);
                 if (u <= 0) throw new BusinessException("更新失败");
             }
-            // 待就诊 <-> 已完成：不涉及号源
+            // 待就诊 -> 已完成：不涉及号源
             else {
                 int u = registrationDAO.updateStatus(conn, regId, newStatus);
                 if (u <= 0) throw new BusinessException("更新失败");
