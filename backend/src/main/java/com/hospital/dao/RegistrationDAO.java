@@ -210,6 +210,23 @@ public class RegistrationDAO {
         return false;
     }
 
+    public boolean existsActiveRegistration(Long userId, Long scheduleId) {
+        String sql = "SELECT COUNT(*) FROM registration WHERE user_id = ? AND schedule_id = ? AND status != 2";
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, scheduleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("检查活跃挂号记录是否存在失败", e);
+        }
+        return false;
+    }
+
     private Registration mapRow(ResultSet rs) throws SQLException {
         Registration reg = new Registration();
         reg.setId(rs.getLong("id"));
