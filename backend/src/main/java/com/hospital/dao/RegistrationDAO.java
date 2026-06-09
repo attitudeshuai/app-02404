@@ -194,7 +194,7 @@ public class RegistrationDAO {
     }
 
     public boolean exists(Long userId, Long scheduleId) {
-        String sql = "SELECT COUNT(*) FROM registration WHERE user_id = ? AND schedule_id = ? ";
+        String sql = "SELECT COUNT(*) FROM registration WHERE user_id = ? AND schedule_id = ? AND status <> 2";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
