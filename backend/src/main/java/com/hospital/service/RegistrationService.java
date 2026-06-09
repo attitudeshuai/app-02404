@@ -62,7 +62,7 @@ public class RegistrationService {
         }
 
         // 检查是否重复挂号
-        if (registrationDAO.exists(userId, scheduleId)) {
+        if (registrationDAO.existsActiveRegistration(userId, scheduleId)) {
             throw new BusinessException("您已在该时段挂号，请勿重复挂号");
         }
 
@@ -213,6 +213,9 @@ public class RegistrationService {
             }
         }
         int oldStatus = reg.getStatus() != null ? reg.getStatus() : 0;
+        if (oldStatus == 1) {
+            throw new BusinessException("已完成的挂号记录不允许被修改");
+        }
         if (oldStatus == newStatus) {
             return;
         }

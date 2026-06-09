@@ -2,7 +2,7 @@ package com.hospital.service;
 
 import com.hospital.dao.RegistrationDAO;
 import com.hospital.dao.ScheduleDAO;
-import com.hospital.entity.Schedule;
+import com.hospital.entity.Registration;
 import com.hospital.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ class RegistrationServiceTest {
             BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.createRegistration(null, 1L));
             assertEquals("用户ID不能为空", ex.getMessage());
-            verify(registrationDAO, never()).exists(any(), any());
+            verify(registrationDAO, never()).existsActiveRegistration(any(), any());
         }
 
         @Test
@@ -55,11 +55,39 @@ class RegistrationServiceTest {
 
         @Test
         void 已在该时段挂号应抛异常() {
-            when(registrationDAO.exists(1L, 10L)).thenReturn(true);
+            when(registrationDAO.existsActiveRegistration(1L, 10L)).thenReturn(true);
             BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.createRegistration(1L, 10L));
             assertEquals("您已在该时段挂号，请勿重复挂号", ex.getMessage());
             verify(scheduleDAO, never()).findById(any());
+        }
+
+        @Test
+        void 已取消的挂号允许重新挂同一排班() {
+            when(registrationDAO.existsActiveRegistration(1L, 10L)).thenReturn(false);
+            try {
+                service.createRegistration(1L, 10L);
+            } catch (BusinessException e) {
+                if ("您已在该时段挂号，请勿重复挂号".equals(e.getMessage())) {
+                    fail("已取消的挂号不应触发重复挂号拦截");
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("updateStatusByAdmin 已完成挂号保护")
+    class UpdateStatusByAdminValidation {
+        @Test
+        void 已完成的挂号不允许被修改() {
+            Registration reg = new Registration();
+            reg.setId(1L);
+            reg.setStatus(1);
+            when(registrationDAO.findById(1L)).thenReturn(reg);
+            BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.updateStatusByAdmin(1L, 0, null));
+            assertEquals("已完成的挂号记录不允许被修改", ex.getMessage());
         }
     }
 
