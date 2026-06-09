@@ -213,6 +213,9 @@ public class RegistrationService {
             }
         }
         int oldStatus = reg.getStatus() != null ? reg.getStatus() : 0;
+        if (oldStatus == 1) {
+            throw new BusinessException("已完成的挂号记录不允许修改");
+        }
         if (oldStatus == newStatus) {
             return;
         }
