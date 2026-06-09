@@ -216,6 +216,10 @@ public class RegistrationService {
         if (oldStatus == newStatus) {
             return;
         }
+        // 已完成的挂号记录不允许被修改
+        if (oldStatus == 1) {
+            throw new BusinessException("已完成的挂号记录不允许修改");
+        }
 
         Connection conn = null;
         try {

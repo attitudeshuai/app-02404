@@ -194,7 +194,9 @@ public class RegistrationDAO {
     }
 
     public boolean exists(Long userId, Long scheduleId) {
-        String sql = "SELECT COUNT(*) FROM registration WHERE user_id = ? AND schedule_id = ? ";
+        // 仅当存在"未取消"(status != 2) 的挂号时视为重复挂号；
+        // 已取消的历史记录允许同一用户对同一排班再次挂号。
+        String sql = "SELECT COUNT(*) FROM registration WHERE user_id = ? AND schedule_id = ? AND status <> 2";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
